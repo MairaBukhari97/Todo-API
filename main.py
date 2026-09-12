@@ -58,13 +58,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 #GET    /todos          → get all todos
 @app.get("/todos", response_model= List[TodoOut])
 def get_todos(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    todo = db.query(Todo).filter(Todo.user_id == current_user.id).all()
 
-    return db.query(Todo).all()
+    return todo
 
 #GET    /todos/{id}     → get one todo
 @app.get("/todos/{id}", response_model= TodoOut)
 def get_todo(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    todo = db.query(Todo).filter(Todo.id == id).first()
+    todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
         raise HTTPException(
@@ -80,7 +81,8 @@ def add_todo(data: TodoInput, db: Session = Depends(get_db), current_user: User 
     todo = Todo(
         title = data.title,
         description = data.description,
-        completed =  data.completed
+        completed =  data.completed,
+        user_id = current_user.id
     )
 
     db.add(todo)
@@ -92,7 +94,7 @@ def add_todo(data: TodoInput, db: Session = Depends(get_db), current_user: User 
 #PUT    /todos/{id}     → mark as completed
 @app.put("/todos/{id}", response_model= TodoOut)
 def update_todo(id: int, data: TodoInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    todo = db.query(Todo).filter(Todo.id == id).first()
+    todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
         raise HTTPException(
@@ -112,7 +114,7 @@ def update_todo(id: int, data: TodoInput, db: Session = Depends(get_db), current
 #DELETE /todos/{id}     → delete a todo
 @app.delete("/todos/{id}")
 def delete_todo(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    todo = db.query(Todo).filter(Todo.id == id).first()
+    todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
             raise HTTPException(
