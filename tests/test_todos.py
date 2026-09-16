@@ -53,7 +53,7 @@ def test_get_todo_unauthorized(client):
     assert response.status_code == 401
 
 
-# Update the todo
+# test_update_todo
 
 def test_update_todo(client, auth_token):
     create_response = client.post("/todos", json={

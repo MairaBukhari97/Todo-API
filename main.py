@@ -1,3 +1,7 @@
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,10 +13,15 @@ from database import SessionLocal, engine, Base
 from models import Todo, User
 from auth import hash_password, verify_password, create_token, verify_token
 
-# Create database tables
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Rate limiting setup
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,16 +73,18 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
-#GET    /todos          → get all todos
+#Get all todos
 @app.get("/todos", response_model= List[TodoOut])
-def get_todos(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+async def get_todos(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     todo = db.query(Todo).filter(Todo.user_id == current_user.id).all()
 
     return todo
 
-#GET    /todos/{id}     → get one todo
+#Get one todo
 @app.get("/todos/{id}", response_model= TodoOut)
-def get_todo(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+async def get_todo(request: Request, id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
@@ -84,9 +95,10 @@ def get_todo(id: int, db: Session = Depends(get_db), current_user: User = Depend
 
     return todo
 
-#POST   /todos          → create a todo
+#Create a todo
 @app.post("/todos", response_model= TodoOut)
-def add_todo(data: TodoInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+async def add_todo(request: Request, data: TodoInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     todo = Todo(
         title = data.title,
         description = data.description,
@@ -100,9 +112,10 @@ def add_todo(data: TodoInput, db: Session = Depends(get_db), current_user: User 
 
     return todo
 
-#PUT    /todos/{id}     → mark as completed
+#Update a todo
 @app.put("/todos/{id}", response_model= TodoOut)
-def update_todo(id: int, data: TodoInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+async def update_todo(request: Request, id: int, data: TodoInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
@@ -120,9 +133,10 @@ def update_todo(id: int, data: TodoInput, db: Session = Depends(get_db), current
 
     return todo
     
-#DELETE /todos/{id}     → delete a todo
+#Delete a todo
 @app.delete("/todos/{id}")
-def delete_todo(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+async def delete_todo(request: Request, id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     todo = db.query(Todo).filter(Todo.id == id, Todo.user_id == current_user.id).first()
 
     if not todo:
@@ -135,9 +149,10 @@ def delete_todo(id: int, db: Session = Depends(get_db), current_user: User = Dep
 
     return {"message": "Todo deleted"}
 
-#POST   /auth/register  → register a user
+#Register a user
 @app.post("/auth/register")
-def register(data: UserRegisterInput, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, data: UserRegisterInput, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.username == data.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
@@ -153,9 +168,10 @@ def register(data: UserRegisterInput, db: Session = Depends(get_db)):
 
     return {"message": "User registered successfully"}
 
-#POST   /auth/login     → login and get a token
+#Login and get a token
 @app.post("/auth/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid username or password")

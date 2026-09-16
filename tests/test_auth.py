@@ -1,15 +1,12 @@
 def test_register_success(client):
-    # Arrange + Act
     response = client.post("/auth/register", json={
         "username": "newuser",
         "password": "password123"
     })
-    # Assert
     assert response.status_code == 200
     assert response.json()["message"] == "User registered successfully"
 
 def test_register_duplicate_username(client, registered_user):
-    # Try registering same username twice
     response = client.post("/auth/register", json={
         "username": registered_user["username"],
         "password": "different_password"

@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from database import Base
 from main import app, get_db
 
-# Separate in-memory database just for tests
+# Separate in-memory database for tests
 TEST_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
@@ -30,7 +30,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture
 def client():
-    # Create a fresh test database
+   
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
