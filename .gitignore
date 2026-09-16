@@ -1,2 +1,5 @@
 .env
-todo.db
+venv/
+__pycache__/
+*.db
+.pytest_cache/
