@@ -1,45 +1,45 @@
 # Todo API
 
-A production-style REST API for managing todos, built with **FastAPI** and **PostgreSQL**. It includes JWT authentication, password hashing, request validation, rate limiting, and an automated test suite. It is deployed live on Railway.
+A REST API for managing todos, built with **FastAPI** and **PostgreSQL**. It includes JWT authentication, password hashing, request validation, rate limiting, and an automated test suite.
 
-**Live API docs:** `https://your-railway-url.up.railway.app/docs`
+The project demonstrates backend development concepts, including authentication, database management, API security, and automated testing.
 
 ---
 
 ## Features
 
-- **Full CRUD** for todos (create, read, update, delete)
-- **Per-user data isolation**: each todo belongs to the user who created it, and users can only see and modify their own todos
-- **JWT authentication** with register and login endpoints
-- **Password hashing** with bcrypt (plain-text passwords are never stored)
-- **Request validation** with Pydantic, with clear 422 errors on bad input
-- **PostgreSQL** database accessed through the SQLAlchemy ORM
-- **Rate limiting** on endpoints to protect against brute-force attacks
-- **CORS** support so a frontend can connect
-- **18 automated tests** with pytest, run against an isolated test database
-- **Auto-generated interactive docs** (Swagger UI) at `/docs`
-- **Secrets kept out of the repo** via environment variables
+* **Full CRUD** for todos (create, read, update, delete)
+* **Per-user data isolation**: Each todo belongs to the user who created it, and users can only access and modify their own todos.
+* **JWT authentication** with register and login endpoints.
+* **Password hashing** with bcrypt (plain-text passwords are never stored).
+* **Request validation** with Pydantic, with clear 422 errors on invalid input.
+* **PostgreSQL** database accessed through the SQLAlchemy ORM.
+* **Rate limiting** on endpoints to protect against brute-force attacks.
+* **CORS** support so a frontend can connect.
+* **18 automated tests** with pytest, running against an isolated SQLite test database.
+* **Auto-generated interactive documentation** (Swagger UI) at `/docs`.
+* **Environment variables** for managing sensitive configuration.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | FastAPI |
-| Database | PostgreSQL (SQLite for tests) |
-| ORM | SQLAlchemy |
-| Validation | Pydantic |
+| Layer          | Technology                          |
+| -------------- | ----------------------------------- |
+| Framework      | FastAPI                             |
+| Database       | PostgreSQL (SQLite for tests)       |
+| ORM            | SQLAlchemy                          |
+| Validation     | Pydantic                            |
 | Authentication | JWT (python-jose), bcrypt (passlib) |
-| Rate limiting | slowapi |
-| Testing | pytest, httpx |
-| Deployment | Railway + GitHub |
+| Rate Limiting  | slowapi                             |
+| Testing        | pytest, httpx                       |
+| Language       | Python                              |
 
 ---
 
 ## Project Structure
 
-```
+```text
 todo_api/
 ├── main.py             # API endpoints and dependencies
 ├── database.py         # Database engine, session factory, Base
@@ -50,8 +50,7 @@ todo_api/
 │   ├── conftest.py     # Test database setup and fixtures
 │   ├── test_auth.py    # Auth endpoint tests
 │   └── test_todos.py   # Todo endpoint tests
-├── requirements.txt
-├── Procfile            # Railway start command
+├── requirements.txt    # Project dependencies
 ├── .env                # Local secrets (not committed)
 └── .gitignore
 ```
@@ -62,30 +61,31 @@ todo_api/
 
 ### Authentication
 
-| Method | Endpoint | Description | Auth required |
-|--------|----------|-------------|---------------|
-| POST | `/auth/register` | Create a new user | No |
-| POST | `/auth/login` | Log in and receive a JWT | No |
+| Method | Endpoint         | Description              | Auth Required |
+| ------ | ---------------- | ------------------------ | ------------- |
+| POST   | `/auth/register` | Create a new user        | No            |
+| POST   | `/auth/login`    | Log in and receive a JWT | No            |
 
 ### Todos
 
-| Method | Endpoint | Description | Auth required |
-|--------|----------|-------------|---------------|
-| GET | `/todos` | Get all of your todos | Yes |
-| GET | `/todos/{id}` | Get one of your todos by ID | Yes |
-| POST | `/todos` | Create a todo | Yes |
-| PUT | `/todos/{id}` | Update a todo | Yes |
-| DELETE | `/todos/{id}` | Delete a todo | Yes |
+| Method | Endpoint      | Description                 | Auth Required |
+| ------ | ------------- | --------------------------- | ------------- |
+| GET    | `/todos`      | Get all your todos          | Yes           |
+| GET    | `/todos/{id}` | Get one of your todos by ID | Yes           |
+| POST   | `/todos`      | Create a todo               | Yes           |
+| PUT    | `/todos/{id}` | Update a todo               | Yes           |
+| DELETE | `/todos/{id}` | Delete a todo               | Yes           |
 
 Protected endpoints expect the token in the request header:
 
-```
+```text
 Authorization: Bearer <your_token>
 ```
 
-### Example requests
+### Example Requests
 
 **Register**
+
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/register \
   -H "Content-Type: application/json" \
@@ -93,12 +93,14 @@ curl -X POST http://127.0.0.1:8000/auth/register \
 ```
 
 **Login**
+
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/login \
   -d "username=maira&password=strongpassword123"
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiJ9...",
@@ -106,7 +108,8 @@ Response:
 }
 ```
 
-**Create a todo**
+**Create a Todo**
+
 ```bash
 curl -X POST http://127.0.0.1:8000/todos \
   -H "Authorization: Bearer <your_token>" \
@@ -115,6 +118,7 @@ curl -X POST http://127.0.0.1:8000/todos \
 ```
 
 Response:
+
 ```json
 {
   "id": 1,
@@ -124,16 +128,16 @@ Response:
 }
 ```
 
-### Status codes
+### HTTP Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad request (for example, username already taken) |
-| 401 | Missing, invalid, or expired token, or wrong credentials |
-| 404 | Todo not found (or it belongs to another user) |
-| 422 | Validation error (request body has the wrong shape or types) |
-| 429 | Rate limit exceeded |
+| Code | Meaning                                                      |
+| ---- | ------------------------------------------------------------ |
+| 200  | Success                                                      |
+| 400  | Bad request (e.g., username already taken)                   |
+| 401  | Missing, invalid, or expired token, or incorrect credentials |
+| 404  | Todo not found or does not belong to the authenticated user  |
+| 422  | Request validation error                                     |
+| 429  | Rate limit exceeded                                          |
 
 ---
 
@@ -141,135 +145,138 @@ Response:
 
 ### Prerequisites
 
-- Python 3.11+
-- A PostgreSQL database (local, or a free one on Railway)
+* Python 3.11+
+* PostgreSQL
+* Git
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/MairaBukhari97/todo-api.git
 cd todo-api
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create and Activate a Virtual Environment
 
 ```bash
 python -m venv venv
+```
 
-# Windows
+**Windows:**
+
+```bash
 venv\Scripts\activate
+```
 
-# macOS / Linux
+**macOS / Linux:**
+
+```bash
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 4. Configure Environment Variables
 
 Create a `.env` file in the project root:
 
-```
+```env
 SECRET_KEY=your-long-random-secret-key
 DATABASE_URL=postgresql://user:password@host:port/dbname
 ```
 
-Generate a strong secret key with:
+Generate a strong secret key using:
 
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 5. Run the server
+Replace the database URL with your actual PostgreSQL connection details.
+
+### 5. Run the Application
+
+Start the FastAPI development server:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-The API runs at `http://127.0.0.1:8000`. Interactive docs are at `http://127.0.0.1:8000/docs`.
+The API will be available at:
+
+* **API:** http://127.0.0.1:8000
+* **Swagger UI:** http://127.0.0.1:8000/docs
+* **ReDoc:** http://127.0.0.1:8000/redoc
 
 ---
 
 ## Running Tests
 
+Run the automated test suite using:
+
 ```bash
 pytest tests/ -v
 ```
 
-The suite has 18 tests: 5 for authentication and 13 for todos. Every todo endpoint is covered for the success case, the not-found case, and the unauthorized case.
+The test suite contains 18 tests:
 
-Tests run against a separate SQLite database. The real database is swapped out using FastAPI's `dependency_overrides`, so your data is never touched.
+* 5 authentication tests
+* 13 todo endpoint tests
+
+Tests run against a separate SQLite database. The application's database dependency is overridden using FastAPI's `dependency_overrides`, ensuring that tests do not affect the actual database.
 
 ---
 
 ## How It Works
 
-### Authentication flow
+### Authentication Flow
 
-1. A user registers. The password is hashed with bcrypt and stored as `hashed_password`.
-2. The user logs in. The submitted password is checked against the stored hash.
-3. On success, the server issues a JWT containing the username and a 30-minute expiry, signed with `SECRET_KEY`.
-4. The client sends the token in the `Authorization` header with every request.
-5. A `get_current_user` dependency verifies the token and loads the user before any protected endpoint runs. Failure returns `401`.
+1. A user registers with a username and password.
+2. The password is hashed using bcrypt and stored as `hashed_password`.
+3. During login, the submitted password is checked against the stored hash.
+4. On successful authentication, the server generates a JWT containing the username and a 30-minute expiry.
+5. The client sends the token in the `Authorization` header with subsequent requests.
+6. The `get_current_user` dependency verifies the token and retrieves the authenticated user.
+7. Invalid or expired tokens result in a `401 Unauthorized` response.
 
-### Data ownership
+### Data Ownership
 
-Every `Todo` row has a `user_id` foreign key. When a todo is created, `user_id` is set from the authenticated user. Every read, update, and delete query filters by both the todo `id` and `current_user.id`, so one user can never access another user's todos. Requesting someone else's todo returns `404`.
+Every `Todo` record has a `user_id` foreign key referencing its owner.
 
-### Request lifecycle (`POST /todos`)
+When a todo is created, its `user_id` is assigned using the currently authenticated user's ID.
+
+All read, update, and delete operations filter records using both the todo ID and the authenticated user's ID.
+
+This ensures that users cannot access or modify another user's todos.
+
+### Request Lifecycle (POST /todos)
 
 1. FastAPI receives the request.
 2. Pydantic validates the request body.
 3. `get_current_user` verifies the JWT.
-4. `get_db` opens a database session.
-5. The endpoint creates the todo with the current user's ID, then runs `db.add()`, `db.commit()`, and `db.refresh()`.
-6. The response is serialized through the `TodoOut` response model.
-7. The session is closed in a `finally` block, so connections never leak.
-
----
-
-## Deployment
-
-The app is deployed on **Railway**:
-
-1. Push the code to GitHub.
-2. Create a Railway project from the GitHub repo.
-3. Add a PostgreSQL service in the same project.
-4. Set the `SECRET_KEY` and `DATABASE_URL` variables on the API service.
-5. Railway installs `requirements.txt` and starts the app using the `Procfile`:
-
-```
-web: uvicorn main:app --host 0.0.0.0 --port $PORT
-```
-
-Every push to the main branch triggers an automatic redeploy.
+4. `get_db` provides a database session.
+5. The endpoint creates a todo associated with the authenticated user.
+6. `db.add()`, `db.commit()`, and `db.refresh()` handle database operations.
+7. The response is serialized using the `TodoOut` response model.
+8. The database session is closed after the request.
 
 ---
 
 ## Security Notes
 
-- Passwords are hashed with bcrypt and never stored in plain text.
-- `SECRET_KEY` and `DATABASE_URL` live in environment variables. `.env` is listed in `.gitignore`.
-- Auth endpoints have stricter rate limits than normal endpoints to slow down brute-force attempts.
-- For production, set `allow_origins` in the CORS config to your exact frontend domains instead of `"*"`.
-
----
-
-## Future Improvements
-
-- Add a `PATCH` endpoint for partial updates
-- Add pagination and filtering to `GET /todos`
-- Use Alembic for database migrations
-- Add refresh tokens
-- Build a React frontend
+* Passwords are hashed using bcrypt and never stored in plain text.
+* `SECRET_KEY` and `DATABASE_URL` are stored in environment variables.
+* The `.env` file is included in `.gitignore` to prevent accidental exposure of secrets.
+* Authentication endpoints have stricter rate limits to help prevent brute-force attacks.
+* For production use, configure CORS to allow only trusted frontend domains instead of using `"*"`.
 
 ---
 
 ## Author
 
 **Maira**
+
 GitHub: [@MairaBukhari97](https://github.com/MairaBukhari97)
